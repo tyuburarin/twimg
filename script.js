@@ -1,5 +1,5 @@
 async function fetchTweet() {
-  const url = document.getElementById('urlInput').value.trim();
+  const url = document.getElementById('url').value.trim();
   if (!url) return;
 
   saveHistory(url);

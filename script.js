@@ -1,4 +1,6 @@
 async function fetchTweet() {
+  alert("fetchTweet 呼ばれた"); // ← まずここが出るか確認
+
   const url = document.getElementById('url').value.trim();
   if (!url) return;
 
@@ -13,15 +15,19 @@ async function fetchTweet() {
   const tweetId = match[1];
 
   try {
+    console.log("fetch 開始", tweetId);
+
     const res = await fetch(
       `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=ja`,
       { cache: 'no-store' }
     );
 
+    console.log("fetch 結果", res.status);
+
     if (!res.ok) throw new Error('fetch failed');
 
     const data = await res.json();
-    console.log(data); // デバッグ用
+    console.log("JSON", data);
 
     outputTweet(data);
   } catch (e) {

@@ -14,9 +14,10 @@ async function fetchTweet() {
   const tweetId = match[1];
 
   try {
-    // 個人用テスト向け CORS プロキシ
-    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-    const res = await fetch(`${proxyUrl}https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=ja`);
+    // thingproxy を経由して fetch
+    const proxyUrl = 'https://thingproxy.freeboard.io/fetch/';
+    const targetUrl = `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=ja`;
+    const res = await fetch(proxyUrl + encodeURIComponent(targetUrl));
 
     if (!res.ok) throw new Error('fetch failed');
 

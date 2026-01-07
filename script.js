@@ -1,6 +1,5 @@
+// ツイート取得ボタン用関数
 async function fetchTweet() {
-  alert("fetchTweet 呼ばれた");
-
   const url = document.getElementById('url').value.trim();
   if (!url) return;
 
@@ -15,40 +14,66 @@ async function fetchTweet() {
   const tweetId = match[1];
 
   try {
-    console.log("① fetch 前");
+    // 個人用テスト向け CORS プロキシ
+    const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+    const res = await fetch(`${proxyUrl}https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=ja`);
 
-    const res = await fetch(
-      `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=ja`,
-      { cache: 'no-store' }
-    );
+    if (!res.ok) throw new Error('fetch failed');
 
-    console.log("② status:", res.status);
-
-    const text = await res.text();
-    console.log("③ 生レスポンス:", text);
-
-    if (!res.ok) {
-      alert("HTTPエラー: " + res.status);
-      return;
-    }
-
-    const data = JSON.parse(text);
-    console.log("④ JSON OK");
-
+    const data = await res.json();
     outputTweet(data);
   } catch (e) {
-    alert('取得処理で例外が発生しました');
+    alert('ツイート取得に失敗しました');
     console.error(e);
   }
 }
 
+// 結果を textarea に出力
 function outputTweet(data) {
-  document.getElementById('result').value =
-    JSON.stringify(data, null, 2);
+  try {
+    const legacy = data.legacy ?? data;
+    const userLegacy = data.core?.user_results?.result?.legacy ?? data.user;
+
+    let text = '';
+
+    if (userLegacy) {
+      text += `${userLegacy.name}@${userLegacy.screen_name} `;
+    }
+
+    text += (legacy.created_at ?? '') + '\n';
+    text += (legacy.full_text ?? legacy.text ?? '') + '\n';
+
+    const medias = legacy.extended_entities?.media ?? data.mediaDetails ?? [];
+    for (const m of medias) {
+      if (m.type === 'photo') {
+        text += (m.media_url_https ?? m.media_url) + '\n';
+      }
+      if (m.type === 'video' || m.type === 'animated_gif') {
+        const variants = m.video_info?.variants ?? [];
+        const best = variants
+          .filter(v => v.content_type === 'video/mp4')
+          .sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
+
+        if (best?.url) text += best.url + '\n';
+      }
+    }
+
+    document.getElementById('result').value = text.trim();
+  } catch (e) {
+    alert('取得できたけど解析に失敗しました');
+    console.error(e, data);
+  }
 }
 
+// URL履歴を localStorage に保存
 function saveHistory(url) {
   const history = JSON.parse(localStorage.getItem('history') || '[]');
   history.unshift(url);
   localStorage.setItem('history', JSON.stringify(history.slice(0, 20)));
+}
+
+// 履歴消去ボタン用
+function clearHistory() {
+  localStorage.removeItem('history');
+  alert('履歴を消しました');
 }

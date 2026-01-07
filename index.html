@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>X URL 文字起こし</title>
+  <style>
+    body { font-family: sans-serif; padding: 16px; }
+    textarea { width: 100%; height: 80px; }
+    button { margin: 4px 0; }
+    .history { margin-top: 12px; font-size: 14px; }
+    .history li { cursor: pointer; color: blue; }
+  </style>
+</head>
+<body>
+  <h2>X URL 文字起こし</h2>
+
+  <input id="url" placeholder="https://x.com/.../status/..." style="width:100%" />
+  <br />
+  <button onclick="fetchTweet()">取得</button>
+  <button onclick="clearHistory()">履歴を全て削除</button>
+
+  <textarea id="result" readonly></textarea>
+
+  <h3>URL履歴</h3>
+  <ul id="history" class="history"></ul>
+
+  <script src="script.js"></script>
+</body>
+</html>

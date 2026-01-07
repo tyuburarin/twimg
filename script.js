@@ -1,92 +1,79 @@
-const HISTORY_KEY = 'tweet_url_history';
-
-function loadHistory() {
-  const list = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  const ul = document.getElementById('history');
-  ul.innerHTML = '';
-
-  list.forEach(url => {
-    const li = document.createElement('li');
-    li.textContent = url;
-    li.onclick = () => {
-      document.getElementById('url').value = url;
-      fetchTweet();
-    };
-    ul.appendChild(li);
-  });
-}
-
-function saveHistory(url) {
-  let list = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-  list = list.filter(u => u !== url);
-  list.unshift(url);
-  list = list.slice(0, 20); // 最大20件
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
-  loadHistory();
-}
-
-function clearHistory() {
-  localStorage.removeItem(HISTORY_KEY);
-  loadHistory();
-}
-
-function extractTweetId(url) {
-  const m = url.match(/status\/(\d+)/);
-  return m ? m[1] : null;
-}
-
 async function fetchTweet() {
-  const url = document.getElementById('url').value.trim();
+  const url = document.getElementById('urlInput').value.trim();
   if (!url) return;
-
-  const id = extractTweetId(url);
-  if (!id) {
-    alert('URLが正しくありません');
-    return;
-  }
 
   saveHistory(url);
 
-  const res = await fetch(
-    `https://cdn.syndication.twimg.com/tweet-result?id=${id}`
-  );
-  const data = await res.json();
-
-  // RT対応
-  if (data.retweeted_status) {
-    return fetchTweetById(data.retweeted_status.id_str);
+  const match = url.match(/status\/(\d+)/);
+  if (!match) {
+    alert('ツイートURLが正しくありません');
+    return;
   }
 
-  outputTweet(data);
-}
+  const tweetId = match[1];
 
-async function fetchTweetById(id) {
-  const res = await fetch(
-    `https://cdn.syndication.twimg.com/tweet-result?id=${id}`
-  );
-  const data = await res.json();
-  outputTweet(data);
+  try {
+    const res = await fetch(
+      `https://cdn.syndication.twimg.com/tweet-result?id=${tweetId}&lang=ja`,
+      { cache: 'no-store' }
+    );
+
+    if (!res.ok) throw new Error('fetch failed');
+
+    const data = await res.json();
+    console.log(data); // デバッグ用
+
+    outputTweet(data);
+  } catch (e) {
+    alert('ツイート取得に失敗しました');
+    console.error(e);
+  }
 }
 
 function outputTweet(data) {
-  let text = `${data.user.name}@${data.user.screen_name} ${data.created_at}\n`;
-  text += data.text + '\n';
+  try {
+    const legacy = data.legacy ?? data;
+    const userLegacy =
+      data.core?.user_results?.result?.legacy ?? data.user;
 
-  if (data.mediaDetails) {
-    for (const m of data.mediaDetails) {
+    let text = '';
+
+    if (userLegacy) {
+      text += `${userLegacy.name}@${userLegacy.screen_name} `;
+    }
+
+    text += (legacy.created_at ?? '') + '\n';
+    text += (legacy.full_text ?? legacy.text ?? '') + '\n';
+
+    const medias =
+      legacy.extended_entities?.media ??
+      data.mediaDetails ??
+      [];
+
+    for (const m of medias) {
       if (m.type === 'photo') {
-        text += m.media_url_https + '\n';
+        text += (m.media_url_https ?? m.media_url) + '\n';
       }
-      if (m.type === 'video') {
-        const best = m.video_info.variants
+
+      if (m.type === 'video' || m.type === 'animated_gif') {
+        const variants = m.video_info?.variants ?? [];
+        const best = variants
           .filter(v => v.content_type === 'video/mp4')
           .sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0];
-        if (best) text += best.url + '\n';
+
+        if (best?.url) text += best.url + '\n';
       }
     }
-  }
 
-  document.getElementById('result').value = text.trim();
+    document.getElementById('result').value = text.trim();
+  } catch (e) {
+    alert('取得できたけど解析に失敗しました');
+    console.error(e, data);
+  }
 }
 
-loadHistory();
+function saveHistory(url) {
+  const history = JSON.parse(localStorage.getItem('history') || '[]');
+  history.unshift(url);
+  localStorage.setItem('history', JSON.stringify(history.slice(0, 20)));
+}

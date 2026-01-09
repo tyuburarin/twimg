@@ -1,29 +1,16 @@
-async function fetchTweet() {
-  const tweetUrl = document.getElementById("url").value.trim();
-  if (!tweetUrl) {
-    alert("URLを入力してください");
-    return;
-  }
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Twitter取得ツール</title>
+</head>
+<body>
+<h1>Twitter URL取得ツール</h1>
+<input type="text" id="url" placeholder="ツイートURLを貼る">
+<button id="fetchBtn">取得</button>
+<button id="clearHistory">履歴削除</button>
+<textarea id="result" rows="10" cols="50"></textarea>
 
-  // Workers URLに ?url= を必ず付ける
-  const workerUrl = "https://your-worker-domain.workers.dev/?url=" + encodeURIComponent(tweetUrl);
-
-  try {
-    const res = await fetch(workerUrl, { cache: "no-store" });
-    if (!res.ok) throw new Error("fetch failed");
-
-    const data = await res.json();
-    console.log(data);
-
-    let output = "";
-    if (data.text) output += data.text + "\n";
-    if (data.images?.length) output += data.images.join("\n") + "\n";
-    if (data.video) output += data.video + "\n";
-
-    document.getElementById("result").value = output.trim();
-  } catch (e) {
-    alert("取得に失敗しました");
-    console.error(e);
-  }
-}
-
+<script src="script.js"></script>
+</body>
+</html>

@@ -6,7 +6,7 @@ async function fetchTweet() {
   console.log("path =", path);
 
   const workerUrl =
-    "https://＜workers名＞.workers.dev/?url=" +
+    "https://twitterproxy.asazadawa.workers.dev/?url=" +
     encodeURIComponent(path);
 
   console.log("workerUrl =", workerUrl);

@@ -1,32 +1,41 @@
+document.getElementById("fetchBtn").onclick = fetchTweet;
+document.getElementById("clearHistory").onclick = () => {
+  localStorage.removeItem("history");
+  alert("履歴を削除しました");
+};
+
 async function fetchTweet() {
-  const input = document.getElementById("url").value.trim();
-
-  // statusのIDだけ抜く（x.com / twitter.com 両対応）
-  const m = input.match(/(?:x|twitter)\.com\/[^\/]+\/status\/(\d+)/);
-  if (!m) {
-    alert("ツイートURLが不正");
+  const tweetUrl = document.getElementById("url").value.trim();
+  if (!tweetUrl) {
+    alert("URLを入力してください");
     return;
   }
-  const tweetId = m[1];
 
-  const workerUrl =
-    "https://twitterproxy.asazadawa.workers.dev/?id=" + tweetId;
+  saveHistory(tweetUrl);
 
-  const res = await fetch(workerUrl, { cache: "no-store" });
-  if (!res.ok) {
+  const workerUrl = "https://your-worker-domain.workers.dev/?url=" + encodeURIComponent(tweetUrl);
+
+  try {
+    const res = await fetch(workerUrl, { cache: "no-store" });
+    if (!res.ok) throw new Error("fetch failed");
+
+    const data = await res.json();
+    console.log(data);
+
+    let output = "";
+    if (data.text) output += data.text + "\n";
+    if (data.images?.length) output += data.images.join("\n") + "\n";
+    if (data.video) output += data.video + "\n";
+
+    document.getElementById("result").value = output.trim();
+  } catch (e) {
     alert("取得に失敗しました");
-    return;
+    console.error(e);
   }
+}
 
-  // WorkersがJSONを返す想定
-  const data = await res.json();
-
-  let out = "";
-  if (data.text) out += data.text + "\n\n";
-  if (Array.isArray(data.images)) {
-    data.images.forEach(u => out += u + "\n");
-  }
-  if (data.video) out += "\n" + data.video;
-
-  document.getElementById("result").value = out.trim();
+function saveHistory(url) {
+  const history = JSON.parse(localStorage.getItem("history") || "[]");
+  history.unshift(url);
+  localStorage.setItem("history", JSON.stringify(history.slice(0, 20)));
 }

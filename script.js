@@ -1,9 +1,3 @@
-document.getElementById("fetchBtn").onclick = fetchTweet;
-document.getElementById("clearHistory").onclick = () => {
-  localStorage.removeItem("history");
-  alert("履歴を削除しました");
-};
-
 async function fetchTweet() {
   const tweetUrl = document.getElementById("url").value.trim();
   if (!tweetUrl) {
@@ -11,8 +5,7 @@ async function fetchTweet() {
     return;
   }
 
-  saveHistory(tweetUrl);
-
+  // Workers URLに ?url= を必ず付ける
   const workerUrl = "https://your-worker-domain.workers.dev/?url=" + encodeURIComponent(tweetUrl);
 
   try {
@@ -34,8 +27,3 @@ async function fetchTweet() {
   }
 }
 
-function saveHistory(url) {
-  const history = JSON.parse(localStorage.getItem("history") || "[]");
-  history.unshift(url);
-  localStorage.setItem("history", JSON.stringify(history.slice(0, 20)));
-}

@@ -10,7 +10,7 @@ async function fetchTweet() {
 
   saveHistory(tweetUrl);
 
-  // ここを自分の Workers URL に変更
+  // 自分のWorkers URLに置き換える
   const workerUrl = "https://your-worker-domain.workers.dev/?url=" + encodeURIComponent(tweetUrl);
 
   try {
@@ -18,7 +18,6 @@ async function fetchTweet() {
     if (!res.ok) throw new Error("fetch failed");
 
     const data = await res.json();
-    console.log(data);
 
     let output = "";
     if (data.text) output += data.text + "\n";
@@ -37,3 +36,4 @@ function saveHistory(url) {
   history.unshift(url);
   localStorage.setItem("history", JSON.stringify(history.slice(0, 20)));
 }
+

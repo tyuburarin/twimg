@@ -1,40 +1,19 @@
 async function fetchTweet() {
   const input = document.getElementById("url").value.trim();
-  if (!input) return;
+  console.log("input =", input);
 
-  const match = input.match(/x\.com\/(.+?\/status\/\d+)/);
-  if (!match) {
-    alert("ツイートURLが不正");
-    return;
-  }
-
-  const path = "/" + match[1];
+  const path = input.replace(/^https?:\/\/(x|twitter)\.com/, "");
+  console.log("path =", path);
 
   const workerUrl =
-    "https://xxxxx.workers.dev/?url=" + encodeURIComponent(path);
+    "https://＜workers名＞.workers.dev/?url=" +
+    encodeURIComponent(path);
+
+  console.log("workerUrl =", workerUrl);
 
   const res = await fetch(workerUrl);
-  const html = await res.text();
+  const text = await res.text();
 
-  parseAndOutput(html);
-}
-
-function parseAndOutput(html) {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  let out = "";
-
-  // 本文
-  const text = doc.querySelector("meta[property='og:description']");
-  if (text) out += text.content + "\n\n";
-
-  // 画像
-  doc.querySelectorAll("meta[property='og:image']").forEach(m => {
-    out += m.content + "\n";
-  });
-
-  // 動画
-  const video = doc.querySelector("meta[property='og:video']");
-  if (video) out += "\n" + video.content;
-
-  document.getElementById("result").value = out.trim();
+  console.log("response =", text);
+  document.getElementById("result").value = text;
 }
